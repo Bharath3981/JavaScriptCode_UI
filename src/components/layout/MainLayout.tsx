@@ -1,57 +1,87 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { useLocation } from 'react-router-dom';
 import Header from './Header';
-import Sidebar from './Sidebar';
-import Footer from './Footer';
-import { useSidebarStore } from '../../store/useSidebarStore';
-
-const drawerWidth = 240;
-
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
-    open?: boolean;
-}>(({ theme, open }) => ({
-    flexGrow: 1,
-    padding: theme.spacing(3),
-    transition: theme.transitions.create('margin', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-    }),
-    marginLeft: -drawerWidth,
-    ...(open && {
-        transition: theme.transitions.create('margin', {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen,
-        }),
-        marginLeft: 0,
-    }),
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
-}));
+import Sidebar, { DRAWER_WIDTH } from './Sidebar';
+import { getMainMenus } from '../../services/menuService';
+import { useMenuStore } from '../../store/useMenuStore';
 
 interface MainLayoutProps {
     children?: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-    const { isOpen } = useSidebarStore();
-    // We need to use Outlet if we use routing layouts, but user asked for "MainLayout" that wraps content.
-    // This component expects 'children' to be passed or we can use Outlet here if we refactor App.tsx to use Layout routes.
-    // For now I'll support children.
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const { setMenus, setActiveRoot, menus, activeRootId } = useMenuStore();
+    const location = useLocation();
+
+    // Fetch Menus on Mount
+    useEffect(() => {
+        getMainMenus().then(data => {
+            setMenus(data);
+        });
+    }, [setMenus]);
+
+    // Sync Active Root based on URL
+    useEffect(() => {
+        if (menus.length > 0) {
+            const findRootForPath = (menuList: any[], currentPath: string): string | undefined => {
+                for (const menu of menuList) {
+                    // Check if this menu matches
+                    if (menu.path && menu.path !== '#' && currentPath.startsWith(menu.path)) {
+                        return menu.id;
+                    }
+                    // Check children recursively (but we only care about TOP level ID)
+                    // Actually, we just need to know if *any* child matches, return THIS menu's ID.
+                    if (menu.children && menu.children.length > 0) {
+                        const hasChildMatch = menu.children.some((child: any) =>
+                            child.path && child.path !== '#' && currentPath.startsWith(child.path)
+                        );
+                        if (hasChildMatch) return menu.id;
+                    }
+                }
+                return undefined;
+            };
+
+            const rootId = findRootForPath(menus, location.pathname);
+            if (rootId) {
+                setActiveRoot(rootId);
+            } else if (!activeRootId && menus.length > 0) {
+                // Fallback to isDefault menu or the first one
+                const defaultMenu = menus.find(m => m.isDefault);
+                setActiveRoot(defaultMenu ? defaultMenu.id : menus[0].id);
+            }
+        }
+    }, [location.pathname, menus, setActiveRoot, activeRootId]);
+
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    };
 
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <Header />
-            <Sidebar />
-            <Main open={isOpen}>
-                <Toolbar /> {/* Spacer for AppBar */}
-                <Box sx={{ flex: 1 }}>
-                    {children}
-                </Box>
-                <Footer />
-            </Main>
+
+            {/* Header controls spacing and mobile toggle */}
+            <Header onDrawerToggle={handleDrawerToggle} />
+
+            {/* Sidebar handles its own fixed width and responsive hiding */}
+            <Sidebar mobileOpen={mobileOpen} onClose={handleDrawerToggle} />
+
+            {/* Main Content Area */}
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    p: 3,
+                    width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+                    minHeight: '100vh',
+                    bgcolor: 'background.default'
+                }}
+            >
+                <Toolbar /> {/* Spacer underneath Fixed AppBar */}
+                {children}
+            </Box>
         </Box>
     );
 };

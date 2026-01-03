@@ -1,27 +1,19 @@
 import type { MenuItem } from '../types';
 
-const MAIN_MENUS: MenuItem[] = [
-    { id: '1', label: 'Home', path: '/' },
-    { id: '2', label: 'Admin', path: '/admin' },
-];
+import { getMenus } from '../api/menuApi';
 
 const SIDEBAR_MENUS: MenuItem[] = [
-    { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'Dashboard' },
-    { id: 'posts', label: 'Posts', path: '/posts', icon: 'Article' },
-    {
-        id: 'settings',
-        label: 'Settings',
-        icon: 'Settings',
-        children: [
-            { id: 'theme', label: 'Theme', icon: 'Brightness4' } // Special handler for theme
-        ]
-    },
+    { id: 'dashboard', title: 'Dashboard', path: '/dashboard', icon: 'Dashboard' },
+    { id: 'posts', title: 'Posts', path: '/posts', icon: 'Article' },
 ];
 
 export const getMainMenus = async (): Promise<MenuItem[]> => {
-    return new Promise((resolve) => {
-        setTimeout(() => resolve(MAIN_MENUS), 500);
-    });
+    try {
+        return await getMenus();
+    } catch (error) {
+        console.error('Failed to fetch menus:', error);
+        return [];
+    }
 };
 
 export const getSidebarMenus = async (): Promise<MenuItem[]> => {
