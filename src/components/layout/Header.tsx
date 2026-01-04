@@ -1,6 +1,7 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Box, Avatar, Badge, Typography, Button } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Box, Avatar, Badge, Typography, Button, Menu, MenuItem as MuiMenuItem } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -19,6 +20,29 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
     const { user } = useAuthStore();
     const { menus, activeRootId, setActiveRoot } = useMenuStore();
     const navigate = useNavigate();
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [activeDropdownId, setActiveDropdownId] = React.useState<string | null>(null);
+
+    const handleDropdownOpen = (event: React.MouseEvent<HTMLElement>, menu: any) => {
+        setAnchorEl(event.currentTarget);
+        setActiveDropdownId(menu.id);
+    };
+
+    const handleDropdownClose = () => {
+        setAnchorEl(null);
+        setActiveDropdownId(null);
+    };
+
+    const handleActionClick = (menu: any) => {
+        handleDropdownClose();
+        if (menu.type === 'ACTION') {
+            if (menu.path === '/logout') {
+                useAuthStore.getState().logout();
+            }
+        } else if (menu.type === 'LINK' && menu.path) {
+            navigate(menu.path);
+        }
+    };
 
     const handleMenuClick = (menu: any) => {
         setActiveRoot(menu.id);
@@ -69,23 +93,63 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {/* Banner Menus (Root Level) */}
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 2 }}>
-                        {menus.map(menu => (
-                            <Button
-                                key={menu.id}
-                                onClick={() => handleMenuClick(menu)}
-                                sx={{
-                                    color: activeRootId === menu.id ? 'primary.main' : 'text.secondary',
-                                    fontWeight: activeRootId === menu.id ? 700 : 500,
-                                    textTransform: 'none',
-                                    fontSize: '1rem',
-                                    borderRadius: 2,
-                                    px: 2,
-                                    '&:hover': { bgcolor: 'action.hover' }
-                                }}
-                            >
-                                {menu.title}
-                            </Button>
-                        ))}
+                        {menus.filter(m => m.placement === 'TOP_BAR').map(menu => {
+                            if (menu.type === 'DROPDOWN') {
+                                return (
+                                    <React.Fragment key={menu.id}>
+                                        <Button
+                                            onClick={(e) => handleDropdownOpen(e, menu)}
+                                            sx={{
+                                                color: 'text.secondary',
+                                                fontWeight: 500,
+                                                textTransform: 'none',
+                                                fontSize: '1rem',
+                                                borderRadius: 2,
+                                                px: 2,
+                                                '&:hover': { bgcolor: 'action.hover' }
+                                            }}
+                                            endIcon={<KeyboardArrowDownIcon sx={{ fontSize: 16 }} />} // Re-using MenuIcon or similar as caret placeholder
+                                        >
+                                            {menu.title}
+                                        </Button>
+                                        <Menu
+                                            anchorEl={anchorEl}
+                                            open={Boolean(anchorEl) && activeDropdownId === menu.id}
+                                            onClose={handleDropdownClose}
+                                        >
+                                            {menu.children?.filter((c: any) => c.placement === 'CONTEXT_MENU').map((child: any) => (
+                                                <MuiMenuItem
+                                                    key={child.id}
+                                                    onClick={() => handleActionClick(child)}
+                                                >
+                                                    {child.icon && <Box component="span" sx={{ mr: 1 }}>{/* Icon logic if needed */}</Box>}
+                                                    {child.title}
+                                                </MuiMenuItem>
+                                            ))}
+                                        </Menu>
+                                    </React.Fragment>
+                                );
+                            }
+
+                            // Default to LINK behavior
+                            return (
+                                <Button
+                                    key={menu.id}
+                                    onClick={() => handleMenuClick(menu)}
+                                    sx={{
+                                        color: activeRootId === menu.id ? 'primary.main' : 'text.secondary',
+                                        fontWeight: activeRootId === menu.id ? 700 : 500,
+                                        textTransform: 'none',
+                                        fontSize: '1rem',
+                                        borderRadius: 2,
+                                        px: 2,
+                                        '&:hover': { bgcolor: 'action.hover' }
+                                    }}
+                                >
+                                    {menu.title}
+                                </Button>
+                            );
+                        })}
                     </Box>
 
                     <IconButton onClick={toggleTheme} color="inherit">

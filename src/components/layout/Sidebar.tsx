@@ -24,7 +24,8 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onClose }) => {
     const { menus, activeRootId } = useMenuStore();
 
     // Derive displayed menus from active root
-    const displayMenus = menus.find(m => m.id === activeRootId)?.children || [];
+    const displayMenus = (menus.find(m => m.id === activeRootId)?.children || [])
+        .filter((child: any) => child.placement !== 'CONTEXT_MENU');
 
     // Auto-open logic can be handled here if needed, but for now we trust `displayMenus` array.
 

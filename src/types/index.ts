@@ -5,6 +5,8 @@ export interface MenuItem {
     icon?: string;
     requiredPermission?: string;
     isDefault?: boolean;
+    type?: 'LINK' | 'DROPDOWN' | 'ACTION';
+    placement?: 'TOP_BAR' | 'CONTEXT_MENU';
     children?: MenuItem[];
 }
 
