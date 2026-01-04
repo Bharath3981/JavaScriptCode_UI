@@ -24,13 +24,18 @@ import { flattenRoutes } from './utils/routeUtils';
 
 const App: React.FC = () => {
   const { mode } = useThemeStore();
+  const { isAuthenticated } = useAuthStore();
   const [routes, setRoutes] = useState<MenuItem[]>([]);
 
   useEffect(() => {
-    getMainMenus().then(menus => {
-      setRoutes(flattenRoutes(menus));
-    });
-  }, []);
+    if (isAuthenticated) {
+      getMainMenus().then(menus => {
+        setRoutes(flattenRoutes(menus));
+      });
+    } else {
+      setRoutes([]);
+    }
+  }, [isAuthenticated]);
 
   const theme = useMemo(() => getTheme(mode), [mode]);
 
