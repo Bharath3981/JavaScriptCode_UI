@@ -66,8 +66,10 @@ const Signup: React.FC = () => {
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
             >
+                <MenuItem value={Role.READONLY}>Read Only</MenuItem>
                 <MenuItem value={Role.USER}>User</MenuItem>
                 <MenuItem value={Role.ADMIN}>Admin</MenuItem>
+                <MenuItem value={Role.SUPER_ADMIN}>Super Admin</MenuItem>
             </TextField>
             <Button
                 type="submit"

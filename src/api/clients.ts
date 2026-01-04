@@ -34,7 +34,7 @@ const attachResponseInterceptor = (client: any) => {
         async (error: any) => {
             if (error.response && error.response.status === 401) {
                 // Clear auth state
-                await useAuthStore.getState().logout();
+                useAuthStore.getState().clearSession();
 
                 // Redirect to login if not already there
                 if (!window.location.pathname.includes('/login')) {

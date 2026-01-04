@@ -32,10 +32,12 @@ export interface AuthResponseData {
     token: string;
 }
 
-export type Role = 'ADMIN' | 'USER';
+export type Role = 'READONLY' | 'USER' | 'ADMIN' | 'SUPER_ADMIN';
 export const Role = {
+    READONLY: 'READONLY' as Role,
+    USER: 'USER' as Role,
     ADMIN: 'ADMIN' as Role,
-    USER: 'USER' as Role
+    SUPER_ADMIN: 'SUPER_ADMIN' as Role
 };
 
 export interface RegisterUserDto {
