@@ -13,9 +13,10 @@ import { DRAWER_WIDTH } from './Sidebar'; // Import shared constant
 
 interface HeaderProps {
     onDrawerToggle: () => void;
+    showSidebar: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
+const Header: React.FC<HeaderProps> = ({ onDrawerToggle, showSidebar }) => {
     const { mode, toggleTheme } = useThemeStore();
     const { user } = useAuthStore();
     const { menus, activeRootId, setActiveRoot } = useMenuStore();
@@ -69,8 +70,8 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
             color="inherit"
             elevation={0}
             sx={{
-                width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-                ml: { sm: `${DRAWER_WIDTH}px` },
+                width: { sm: showSidebar ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%' },
+                ml: { sm: showSidebar ? `${DRAWER_WIDTH}px` : 0 },
                 borderBottom: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'background.paper'
@@ -78,15 +79,17 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
         >
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={onDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
+                    {showSidebar && (
+                        <IconButton
+                            color="inherit"
+                            aria-label="open drawer"
+                            edge="start"
+                            onClick={onDrawerToggle}
+                            sx={{ mr: 2, display: { sm: 'none' } }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                    )}
                 </Box>
 
                 {/* Right Actions */}

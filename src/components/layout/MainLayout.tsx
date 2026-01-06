@@ -13,6 +13,13 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const { setMenus, setActiveRoot, menus, activeRootId } = useMenuStore();
+
+    // Determine if we should show the sidebar
+    // We only show it if the *active* menu has children that are NOT context menus
+    const displayMenus = (menus.find(m => m.id === activeRootId)?.children || [])
+        .filter((child: any) => child.placement !== 'CONTEXT_MENU');
+
+    const showSidebar = displayMenus.length > 0;
     const location = useLocation();
 
     // Fetch Menus on Mount
@@ -63,10 +70,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <CssBaseline />
 
             {/* Header controls spacing and mobile toggle */}
-            <Header onDrawerToggle={handleDrawerToggle} />
+            <Header onDrawerToggle={handleDrawerToggle} showSidebar={showSidebar} />
 
             {/* Sidebar handles its own fixed width and responsive hiding */}
-            <Sidebar mobileOpen={mobileOpen} onClose={handleDrawerToggle} />
+            {showSidebar && (
+                <Sidebar mobileOpen={mobileOpen} onClose={handleDrawerToggle} />
+            )}
 
             {/* Main Content Area */}
             <Box
@@ -74,7 +83,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 sx={{
                     flexGrow: 1,
                     p: 3,
-                    width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+                    width: { sm: showSidebar ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%' },
                     minHeight: '100vh',
                     bgcolor: 'background.default'
                 }}
