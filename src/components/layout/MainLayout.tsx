@@ -3,7 +3,6 @@ import { Box, CssBaseline, Toolbar } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Sidebar, { DRAWER_WIDTH } from './Sidebar';
-import { getMainMenus } from '../../services/menuService';
 import { useMenuStore } from '../../store/useMenuStore';
 
 interface MainLayoutProps {
@@ -12,7 +11,7 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const [mobileOpen, setMobileOpen] = useState(false);
-    const { setMenus, setActiveRoot, menus, activeRootId } = useMenuStore();
+    const { setActiveRoot, menus, activeRootId } = useMenuStore();
 
     // Determine if we should show the sidebar
     // We only show it if the *active* menu has children that are NOT context menus
@@ -21,13 +20,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     const showSidebar = displayMenus.length > 0;
     const location = useLocation();
-
-    // Fetch Menus on Mount
-    useEffect(() => {
-        getMainMenus().then(data => {
-            setMenus(data);
-        });
-    }, [setMenus]);
 
     // Sync Active Root based on URL
     useEffect(() => {

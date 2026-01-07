@@ -28,8 +28,9 @@ export const useAuthStore = create<AuthState>()(
             },
             signup: async (dto) => {
                 try {
-                    const newUser = await register(dto);
-                    set({ user: newUser, isAuthenticated: true });
+                    await register(dto);
+                    // Do not auto-login after signup
+                    // set({ user: newUser, isAuthenticated: true });
                 } catch (error) {
                     console.error('Signup failed:', error);
                     throw error;

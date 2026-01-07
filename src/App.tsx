@@ -4,6 +4,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { useThemeStore } from './store/useThemeStore';
 import { useAuthStore } from './store/useAuthStore';
+import { useMenuStore } from './store/useMenuStore';
 import { getTheme } from './theme/theme';
 import MainLayout from './components/layout/MainLayout';
 import AuthLayout from './components/layout/AuthLayout';
@@ -25,17 +26,23 @@ import { flattenRoutes } from './utils/routeUtils';
 const App: React.FC = () => {
   const { mode } = useThemeStore();
   const { isAuthenticated } = useAuthStore();
+  const { setMenus } = useMenuStore();
   const [routes, setRoutes] = useState<MenuItem[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
       getMainMenus().then(menus => {
+        setMenus(menus);
         setRoutes(flattenRoutes(menus));
       });
     } else {
-      setRoutes([]);
+      // Defer state update to avoid synchronous render warning
+      setTimeout(() => {
+        setMenus([]); // Clear store on logout/unauth
+        setRoutes([]);
+      }, 0);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setMenus]);
 
   const theme = useMemo(() => getTheme(mode), [mode]);
 

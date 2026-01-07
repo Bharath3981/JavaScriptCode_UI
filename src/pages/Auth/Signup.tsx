@@ -16,7 +16,7 @@ const Signup: React.FC = () => {
         e.preventDefault();
         if (email && password) {
             await signup({ email, password, name, role });
-            navigate('/');
+            navigate('/login');
         }
     };
 
