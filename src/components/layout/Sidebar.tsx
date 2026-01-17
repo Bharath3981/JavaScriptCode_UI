@@ -3,11 +3,14 @@ import { useLocation, Link } from 'react-router-dom';
 import {
     Box, Drawer, List, ListItem, ListItemButton,
     ListItemIcon, ListItemText, Typography, Avatar, Divider,
-    useTheme, alpha
+    useTheme, alpha, Collapse
 } from '@mui/material';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import { useMenuStore } from '../../store/useMenuStore';
 import { getIcon } from '../../utils/getIcon';
 import { useAuthStore } from '../../store/useAuthStore';
+import type { MenuItem } from '../../types';
 
 // Define the drawer width constant here or import from a constants file
 export const DRAWER_WIDTH = 240;
@@ -17,17 +20,106 @@ interface SidebarProps {
     onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onClose }) => {
+interface SidebarItemProps {
+    menu: MenuItem;
+    depth?: number;
+    onClose: () => void;
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ menu, depth = 0, onClose }) => {
     const theme = useTheme();
     const location = useLocation();
+    const [open, setOpen] = React.useState(false);
+
+    // Check if this item is active or any of its children
+    const isActive = location.pathname === menu.path;
+    const isChildActive = React.useMemo(() => {
+        const checkChild = (m: MenuItem): boolean => {
+            if (m.path && location.pathname.startsWith(m.path)) return true;
+            return m.children ? m.children.some(checkChild) : false;
+        };
+        return menu.children ? menu.children.some(checkChild) : false;
+    }, [location.pathname, menu]);
+
+    // Auto-expand if child is active
+    React.useEffect(() => {
+        if (isChildActive) {
+            setOpen(true);
+        }
+    }, [isChildActive]);
+
+    const hasChildren = menu.children && menu.children.length > 0;
+    const paddingLeft = 16 + (depth * 16); // Base 16px (2 * 8) + 16px indent per level
+
+    const handleClick = () => {
+        if (hasChildren) {
+            setOpen(!open);
+        } else {
+            onClose();
+        }
+    };
+
+    return (
+        <>
+            <ListItem disablePadding sx={{ mb: 0.5, display: 'block' }}>
+                <ListItemButton
+                    component={hasChildren ? 'div' : Link}
+                    to={hasChildren ? undefined : (menu.path || '#')}
+                    onClick={handleClick}
+                    sx={{
+                        borderRadius: 2,
+                        py: 1,
+                        pl: `${paddingLeft}px`,
+                        minHeight: 44,
+                        transition: 'all 0.2s',
+                        bgcolor: isActive ? 'primary.soft' : 'transparent',
+                        color: isActive ? 'primary.main' : 'text.secondary',
+                        '&:hover': {
+                            bgcolor: 'action.hover',
+                            color: 'primary.main',
+                            transform: 'translateX(3px)'
+                        },
+                        ...(isActive && {
+                            bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        })
+                    }}
+                >
+                    <ListItemIcon sx={{
+                        minWidth: 36,
+                        color: isActive ? 'primary.main' : 'inherit'
+                    }}>
+                        {getIcon(menu.icon)}
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={menu.title}
+                        primaryTypographyProps={{
+                            fontWeight: isActive || isChildActive ? 600 : 500,
+                            fontSize: '0.9rem'
+                        }}
+                    />
+                    {hasChildren && (open ? <ExpandLess /> : <ExpandMore />)}
+                </ListItemButton>
+            </ListItem>
+            {hasChildren && (
+                <Collapse in={open} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                        {menu.children!.map((child) => (
+                            <SidebarItem key={child.id} menu={child} depth={depth + 1} onClose={onClose} />
+                        ))}
+                    </List>
+                </Collapse>
+            )}
+        </>
+    );
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onClose }) => {
     const { user } = useAuthStore();
     const { menus, activeRootId } = useMenuStore();
 
     // Derive displayed menus from active root
     const displayMenus = (menus.find(m => m.id === activeRootId)?.children || [])
         .filter((child: any) => child.placement !== 'CONTEXT_MENU');
-
-    // Auto-open logic can be handled here if needed, but for now we trust `displayMenus` array.
 
     const drawerContent = (
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -49,48 +141,9 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onClose }) => {
             </Box>
 
             <List sx={{ flex: 1, px: 1.5 }}>
-                {displayMenus.map((menu) => {
-                    const isActive = location.pathname === menu.path;
-                    return (
-                        <ListItem key={menu.id} disablePadding sx={{ mb: 0.5 }}>
-                            <ListItemButton
-                                component={Link}
-                                to={menu.path || '#'}
-                                onClick={onClose}
-                                sx={{
-                                    borderRadius: 2,
-                                    py: 1, // Compact padding
-                                    minHeight: 44,
-                                    transition: 'all 0.2s',
-                                    bgcolor: isActive ? 'primary.soft' : 'transparent',
-                                    color: isActive ? 'primary.main' : 'text.secondary',
-                                    '&:hover': {
-                                        bgcolor: 'action.hover',
-                                        color: 'primary.main',
-                                        transform: 'translateX(3px)'
-                                    },
-                                    ...(isActive && {
-                                        bgcolor: alpha(theme.palette.primary.main, 0.08),
-                                    })
-                                }}
-                            >
-                                <ListItemIcon sx={{
-                                    minWidth: 36,
-                                    color: isActive ? 'primary.main' : 'inherit'
-                                }}>
-                                    {getIcon(menu.icon)}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={menu.title}
-                                    primaryTypographyProps={{
-                                        fontWeight: isActive ? 600 : 500,
-                                        fontSize: '0.9rem'
-                                    }}
-                                />
-                            </ListItemButton>
-                        </ListItem>
-                    );
-                })}
+                {displayMenus.map((menu) => (
+                    <SidebarItem key={menu.id} menu={menu} onClose={onClose} />
+                ))}
             </List>
 
             <Divider sx={{ my: 1.5 }} />

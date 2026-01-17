@@ -18,6 +18,7 @@ export interface User {
     token?: string;
     createdAt?: string;
     updatedAt?: string;
+    isDeleted?: boolean;
 }
 
 export interface ApiResponse<T> {

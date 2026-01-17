@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar, { DRAWER_WIDTH } from './Sidebar';
 import { useMenuStore } from '../../store/useMenuStore';
@@ -81,7 +81,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 }}
             >
                 <Toolbar /> {/* Spacer underneath Fixed AppBar */}
-                {children}
+                {children || <Outlet />}
             </Box>
         </Box>
     );

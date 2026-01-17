@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
-import { Button, TextField, Typography, Box, Link as MuiLink } from '@mui/material';
+import { Button, TextField, Typography, Box, Link as MuiLink, Alert } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const { login } = useAuthStore();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         if (email && password) {
-            await login({ email, password });
-            navigate('/');
+            try {
+                await login({ email, password });
+                navigate('/');
+            } catch (err) {
+                const responseError = err as { response?: { data?: { message?: string } }, message?: string };
+                const errorMessage = responseError.response?.data?.message || responseError.message || 'Login failed';
+                setError(errorMessage);
+            }
         }
     };
 
@@ -22,6 +30,7 @@ const Login: React.FC = () => {
             <Typography component="h1" variant="h5" align="center" gutterBottom>
                 Sign in
             </Typography>
+            {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
             <TextField
                 margin="normal"
                 required

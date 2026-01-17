@@ -33,7 +33,9 @@ const App: React.FC = () => {
     if (isAuthenticated) {
       getMainMenus().then(menus => {
         setMenus(menus);
-        setRoutes(flattenRoutes(menus));
+        const flat = flattenRoutes(menus);
+        console.log('[App] Flattened Routes:', flat.map(r => r.path));
+        setRoutes(flat);
       });
     } else {
       // Defer state update to avoid synchronous render warning
@@ -63,8 +65,12 @@ const App: React.FC = () => {
                 const defaultRoute = routes.find(r => r.isDefault);
                 return defaultRoute && defaultRoute.path ? <Navigate to={defaultRoute.path} replace /> : <Home />;
               })()} />
+
               {routes.map(route => {
                 const Component = route.path && COMPONENT_MAP[route.path];
+                if (!Component && route.path && !route.path.startsWith('#')) {
+                    console.warn(`[App] No component found for path: ${route.path}. Available keys:`, Object.keys(COMPONENT_MAP));
+                }
                 return Component ? (
                   <Route
                     key={route.id}
